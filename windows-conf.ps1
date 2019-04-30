@@ -1,40 +1,22 @@
-﻿<# 
-	Department:	ETC STC
-	Name:		Chan.Shijia
-	Date:		2018/11/21
-	Language:	Powershell script
-	Test env:	Windows 2012, Windows 2016
-	command:	execute by Powershell
-	
-#>
-
-function Setup_ip_static_default()
-{
+﻿function Setup_ip_static_default(){
     Remove-NetIPAddress -Confirm:$false
-    Clear-Host   #clean screen
-
-    #Get-NetAdapter | Sort-Object -Property Name
+    Clear-Host
 
     $ifIndex = Get-NetAdapter | Where-Object ifIndex | Select-Object -ExpandProperty ifIndex
     $IPtail = 10
-    #[int]$IPtail = Read-Host "`n Please Enter The IP Number(ex:192.168.1.xx)"
+    #   192.168.1.10,20,30 - 192.168.1.end
 
         for($n=0;$ifIndex.Length -gt $n;$n++){
             New-NetIPAddress -IPAddress 192.168.1.$IPtail -PrefixLength 24 -InterfaceIndex $ifIndex[$n] | 
-            Select-Object InterfaceAlias,IPaddress,PrefixLength -skip 1 #Select-Object IPAddress,InterfaceIndex,InterfaceAlias,PrefixLength -skip 1
-            #Get-NetAdapter -InterfaceIndex $ifIndex[$n] | Select-Object Name , InterfaceDescription , ifIndex
+            Select-Object InterfaceAlias,IPaddress,PrefixLength -skip 1
             $IPtail = $IPtail + 10
         }
-
     Read-Host "`n The above IP has been set up,press enter to continue... "
 }
 
-function Setup_ip_static()
-{
+function Setup_ip_static(){
     Remove-NetIPAddress -Confirm:$false
-    Clear-Host   #clean screen
-
-    #Get-NetAdapter | Sort-Object -Property Name
+    Clear-Host
 
     $ifIndex = Get-NetAdapter | Where-Object ifIndex | Select-Object -ExpandProperty ifIndex
     $IPtail = 10
@@ -42,16 +24,13 @@ function Setup_ip_static()
 
         for($n=0;$ifIndex.Length -gt $n;$n++){
             New-NetIPAddress -IPAddress 192.168.1.$IPtail -PrefixLength 24 -InterfaceIndex $ifIndex[$n] | 
-            Select-Object InterfaceAlias,IPaddress,PrefixLength -skip 1 #Select-Object IPAddress,InterfaceIndex,InterfaceAlias,PrefixLength -skip 1
-            #Get-NetAdapter -InterfaceIndex $ifIndex[$n] | Select-Object Name , InterfaceDescription , ifIndex
+            Select-Object InterfaceAlias,IPaddress,PrefixLength -skip 1
             $IPtail = $IPtail + 10
         }
-
     Read-Host "`n The above IP has been set up,press enter to continue... "
 }
 
-function Clean_all_disk()
-{
+function Clean_all_disk(){
     Clear-Host
     Write-Host "SUT Disk list"
 	Get-disk | Sort-Object -Property Number
@@ -64,66 +43,49 @@ function Clean_all_disk()
 			$double_confirm = Read-Host "[Final comfirm]Disk 1 to $a will be delete, Do you want to contiun?[Y]Yes or [N]No"
 			if($double_confirm -eq "Y"){
 				Write-Host "`nClear Disk now, Please Wait."
-				for($index=1;$max_disk_number -ge $index;$index++){Write-Host "Clear Disk $b" ; Clear-Disk -number $index -RemoveData -RemoveOEM -Confirm:$false}
-					Write-Host "Done."
-					Write-Host "`nInitialize Disk now, Please Wait."
-				for($index=1 ; $max_disk_number -ge $index;$index++){Write-Host "Initial Disk $b" ; Initialize-Disk -Number $index}
-					Write-Host "Done."
+				for($index=1;$max_disk_number -ge $index;$index++){
+                    Write-Host "Clear Disk $b" ; 
+                    Clear-Disk -number $index -RemoveData -RemoveOEM -Confirm:$false
+                }
+				Write-Host "Done."
+				Write-Host "`nInitialize Disk now, Please Wait."
+				for($index=1 ; $max_disk_number -ge $index;$index++){
+                    Write-Host "Initial Disk $b" ; 
+                    Initialize-Disk -Number $index
+                }
+                Write-Host "Done."
 			}
 		}
-    Read-Host "`nAll Disk has been cleaned,press enter to continue... "
+    Read-Host "`nAll Disk(except disk 0) has been cleaned,press enter to continue... "
 }
 
-function Setup_ip_dhcp()
-{
+function Setup_ip_dhcp(){
     Set-netIPinterface -DHCP Enabled
 
     Clear-Host
-    Read-Host "`nAll Disk Cleaned,press enter to continue... "
+    Read-Host "`nAll Network interface enable DHCP,press enter to continue... "
 }
 
-function disable_firewall()
-{
+function disable_firewall(){
     Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
 
     Read-Host "`nFirewall has closed,press enter to continue... "
 }
 
-function display_turn_on()
-{
-    #$powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
-    #$powerPlan.Activate()
-
+function display_turn_on(){
     powercfg -change -monitor-timeout-ac 0
 
-    Read-Host "`nDisplay will never turn off,press enter to continue... "
+    Read-Host "`nDisplay has set always keep light,press enter to continue... "
 }
-<#
-function Clean_all_disk_Wayne()
-{
-    Write-Host "SUT Disk list"
-	Get-disk | Sort-Object -Property Number -Descending | Select-Object Number
-	Write-Host "Please confirm that all partition data are save or you don't what to keep."
-	$a = 0
-	[int]$a = Read-Host "Please Enter The largest Disk Number"
-	$c = Read-Host "Disk will be delete, Do you want to contiun?[Y]Yes or [N]No"
 
-		if( $c -eq "Y"){
-			$d = Read-Host "[Final comfirm]Disk 1 to $a will be delete, Do you want to contiun?[Y]Yes or [N]No"
-			if($d -eq "Y"){
-				Write-Host "Clear Disk now, Please Wait."
-				for($b=1;$a -ge $b;$b++){Write-Host "Clear Disk $b" ; Clear-Disk -number $b -RemoveData -RemoveOEM -Confirm:$false}
-					Write-Host "Done."
-					Write-Host "Initialize Disk now, Please Wait."
-				for($b=1 ; $a -ge $b ; $b++){Write-Host "Initial Disk $b" ; Initialize-Disk -Number $b}
-					Write-Host "Done."
-			}
-		}
+function power_high_perf{
+    $powerPlan = Get-WmiObject -Namespace root\cimv2\power -Class Win32_PowerPlan -Filter "ElementName = 'High Performance'"
+    $powerPlan.Activate()
+    
+    Read-Host "`nPower plan has set High Performance,press enter to continue... "
 }
-#>
 
-do
-{
+do{
     Clear-Host
     Write-Host "-----------------------------------------------"
     Write-Host "| 1.Setup all network interface to static IP  |"
@@ -140,15 +102,15 @@ do
     Write-Host "-----------------------------------------------"
     $menu = Read-Host "`n key the number and press enter"
     
-
-    switch($menu)
-    {
+    switch($menu){
+    
         # Auto mode
         0 {
         Setup_ip_static_default
         disable_firewall
         display_turn_on
         }
+        
         # 1.Setup all network interface to static IP
         1 {Setup_ip_static}
 
@@ -168,7 +130,6 @@ do
         q {write-Host " Quit...";Start-Sleep -s 2}
 
         default {Clear-Host;write-Host " Please enter '1'~'5'or'q'";}
-
 
     }
 }while($menu -ne 'q')
